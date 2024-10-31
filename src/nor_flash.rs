@@ -89,8 +89,14 @@ pub trait NorFlash: ReadNorFlash {
 	/// The minumum number of bytes the storage peripheral can erase
 	const ERASE_SIZE: usize;
 
+	/// The value read from the flash when it has been erased.
+	///
+	/// Should have length equal to [`WRITE_SIZE`].
+	const ERASE_VALUE: &'static [u8];
+
 	/// Erase the given storage range, clearing all data within `[from..to]`.
-	/// The given range will contain all 1s afterwards.
+	/// The given range will contain contain [`Self::ERASE_VALUE`] afterwards,
+	/// aligned to [`WRITE_SIZE`].
 	///
 	/// If power is lost during erase, contents of the page are undefined.
 	///
@@ -168,6 +174,7 @@ impl<T: ReadNorFlash> ReadNorFlash for &mut T {
 impl<T: NorFlash> NorFlash for &mut T {
 	const WRITE_SIZE: usize = T::WRITE_SIZE;
 	const ERASE_SIZE: usize = T::ERASE_SIZE;
+	const ERASE_VALUE: &'static [u8] = T::ERASE_VALUE;
 
 	fn erase(&mut self, from: u32, to: u32) -> Result<(), Self::Error> {
 		T::erase(self, from, to)
